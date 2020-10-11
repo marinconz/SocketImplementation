@@ -1,21 +1,112 @@
 import socket
-s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-port = 12345 
+import sys
+import os
 
-s.bind(('', port))         
-print ("socket binded to %s" %(port) )
-   
-s.listen(5)      
-print ("socket is listening")
+DEFAUlT_BUCKET_PATH = './Buckets'
 
-while True: 
-  
-   # Establish connection with client. 
-   c, addr = s.accept()      
-   print ('Got connection from', addr )
-  
-   c.send(b'Thank you for connecting') 
+server_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+path = None
+print(str(sys.argv))
 
-   c.close() 
+def checkPath(dir):
+   if(not os.path.isdir(dir)):
+      os.mkdir(dir)
+      return('Creacion exitosa')
+   else:
+      return('El directorio ya existe')
 
-   
+#Verificar existencia de directorio por argumentos, si es invalido se usa el default
+if(len(sys.argv) > 1):
+   if(os.path.isdir(sys.argv[1])):
+      path = sys.argv[1]
+   else:
+      checkPath(DEFAUlT_BUCKET_PATH)
+      path = DEFAUlT_BUCKET_PATH
+#Verificar existencia del directorio por defecto
+else:
+   print('No se especifico la ruta del directorio. Se usara una ruta por defecto')
+   checkPath(DEFAUlT_BUCKET_PATH)
+   path = DEFAUlT_BUCKET_PATH
+
+
+# Funcion Main
+def main():
+   print("===============================")
+   print("Servidor corriendo...")
+   create_server_socket()
+
+# Funcion para iniciar el proceso del servidor
+def create_server_socket():
+   tuple_connection = ('127.0.0.1', 3000)
+   server_socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+   server_socket.bind(tuple_connection)
+   server_socket.listen(5)
+   print('El Socket esta escuchando...', server_socket.getsockname())
+
+   # Ciclo para crear nuevas conexiones
+   while True:
+      client_connection, client_address = server_socket.accept()
+      print(f'Nueva conexion detectada', client_address)
+      while True:
+         data_received = client_connection.recv(1024)
+         remote_string = str(data_received.decode(
+            'utf-8'))
+         remote_command = remote_string.split()
+         if(len(remote_command) > 1):
+            pathWithParam = f'{path}/{remote_command[1]}'
+        # print('chimbo',remote_command)
+         command = remote_command[0]
+         print(f'Data recibida de {client_address[0]}:{client_address[1]}')
+
+         #Manejo de variables con y sin parametro extra
+         if(command == 'ls' and len(remote_command) == 1):
+            response = '\n'.join(os.listdir(path))
+            client_connection.sendall(response.encode('utf-8'))
+         elif(command == 'ls'):
+            response = ''.join(os.listdir(pathWithParam))
+            client_connection.sendall(response.encode('utf-8'))
+         elif(command == 'mkbkt'):
+            response = checkPath(pathWithParam)
+            client_connection.sendall(response.encode('utf-8'))
+         elif(command == 'rm' and len(remote_command) == 2):
+            try:
+               os.rmdir(pathWithParam)
+            except OSError:
+               response = 'Deletion of the Bucket has failed'
+            else:
+               response = 'Successfully deleted the bucket'
+            client_connection.sendall(response.encode('utf-8'))
+         elif(command == 'rm' and len(remote_command) == 3):
+            if(not os.path.exists(f'{pathWithParam}/{remote_command[2]}')):
+               response = 'The file does not exist'
+            else: 
+               os.remove(f'{pathWithParam}/{remote_command[2]}')
+               response = 'File has been deleted successfully'
+            client_connection.sendall(response.encode('utf-8'))
+         elif(command == 'upload'):
+            print('upload command executed')
+            file = open(f'{path}/{remote_command[2]}/{remote_command[1]}', 'wb')
+            stream = client_connection.recv(1024)
+            while(stream):
+               file.write(stream)
+               print(not not stream)
+               stream = client_connection.recv(1024)
+               if(stream == b''):
+                  break
+            print("closed successfully")
+            file.close()
+            response = 'File transferred successfully'
+            client_connection.sendall(response.encode('utf-8'))
+
+         elif (command == 'quit'):
+            response = 'Connection terminated'
+            client_connection.sendall(response.encode('utf-8'))
+            break
+
+         
+      print(f'Client {client_address[0]}:{client_address[1]} disconnected')
+      client_connection.close()
+
+if __name__ == "__main__":
+   # execute only if run as a script
+   main()

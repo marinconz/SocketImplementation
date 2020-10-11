@@ -1,8 +1,47 @@
-import socket                
+import socket
+import os          
    
-s = socket.socket()           
-port = 12345                
+clientSocket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 
-s.connect(('127.0.0.1', port)) 
-print (s.recv(1024)  )
-s.close() 
+def main():
+  print('Client is running')
+  clientSocket.connect(('127.0.0.1', 3000))
+  localTouple = clientSocket.getsockname()
+  print('Connected to the server from', localTouple)
+  print('Enter quit to exit')
+  print('Input commands')
+  commandToSend = input()
+
+  while commandToSend != 'quit':
+    commands = commandToSend.split()
+    
+    if(commandToSend == ''):
+      print('Please input a valid command')
+      commandToSend = input()
+    elif(commands[0] == 'upload'):
+      if(not os.path.exists(commands[1])):
+        print('File does not exist')
+      else:
+        clientSocket.send(bytes(commandToSend, 'utf-8'))
+        file = open(commands[1], 'rb')
+        stream = file.read(1024)
+        while(stream):
+          clientSocket.send(stream)
+          stream = file.read(1024)
+        file.close()
+        commandToSend = input()
+
+    else:
+      clientSocket.send(bytes(commandToSend, 'utf-8'))
+      dataReceived = clientSocket.recv(1024)
+      print(dataReceived.decode('utf-8'))
+      commandToSend = input()
+  clientSocket.send(bytes(commandToSend, 'utf-8'))
+  dataReceived = clientSocket.recv(1024)
+  print(dataReceived.decode('utf-8'))
+  clientSocket.close()
+
+
+if __name__ == "__main__":
+   # execute only if run as a script
+   main()
