@@ -1,7 +1,8 @@
 # SocketImplementation
-- Crear (MKBKT) y eliminar (rm) bucket DONE
-- Listar buckets (LS) DONE
-- Cargar achivos del cliente al bucket (upload [nombreFile] [bucket]) DONE
-- Listar archivos de, bucket (LS [nombre]) DONE
-- Descargar archivo del server al cliente (DOWLOAD)
-- Eliminar archivo del bucket (rm [bucket] [file])
+- Create bucket `mkbkt bucketName` 
+- Remove bucket `rm bucketName`
+- List buckets `ls`
+- Listfiles from bucket `ls bucketName`
+- Upload files from client to a server bucket `upload fileName bucketName` or `upload filePath bucketName`
+- Download file from server buckt to client `download bucketName fileName`
+- Remove file from bucket `rm bucketName FileName`

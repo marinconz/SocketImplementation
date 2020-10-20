@@ -1,19 +1,20 @@
 import socket
 import sys
 import os
+import time
  
 DEFAUlT_BUCKET_PATH = './Buckets'
  
-server_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+serverSocket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 path = None
 print(str(sys.argv))
  
 def checkPath(dir):
    if(not os.path.isdir(dir)):
       os.mkdir(dir)
-      return('Creacion exitosa')
+      return('Creation was successful')
    else:
-      return('El directorio ya existe')
+      return('Directory already exists')
  
 #Verificar existencia de directorio por argumentos, si es invalido se usa el default
 if(len(sys.argv) > 1):
@@ -24,7 +25,7 @@ if(len(sys.argv) > 1):
       path = DEFAUlT_BUCKET_PATH
 #Verificar existencia del directorio por defecto
 else:
-   print('No se especifico la ruta del directorio. Se usara una ruta por defecto')
+   print('Rute was not specified. A default one will be used')
    checkPath(DEFAUlT_BUCKET_PATH)
    path = DEFAUlT_BUCKET_PATH
  
@@ -32,36 +33,36 @@ else:
 # Funcion Main
 def main():
    print("===============================")
-   print("Servidor corriendo...")
-   create_server_socket()
+   print("Server is running...")
+   createServerSocket()
  
 # Funcion para iniciar el proceso del servidor
-def create_server_socket():
-   tuple_connection = ('127.0.0.1', 3000)
-   server_socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
-   server_socket.bind(tuple_connection)
-   server_socket.listen(5)
-   print('El Socket esta escuchando...', server_socket.getsockname())
+def createServerSocket():
+   tuppleConnection = ('127.0.0.1', 3000)
+   serverSocket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+   serverSocket.bind(tuppleConnection)
+   serverSocket.listen(5)
+   print('Soket is listening...', serverSocket.getsockname())
  
    # Ciclo para crear nuevas conexiones
    while True:
-      client_connection, client_address = server_socket.accept()
-      print(f'Nueva conexion detectada', client_address)
+      clientConnection, clientAddress = serverSocket.accept()
+      print(f'New connection detected', clientAddress)
       while True:
-         data_received = client_connection.recv(1024)
-         remote_string = str(data_received.decode(
+         dataRecieved = clientConnection.recv(1024)
+         remoteString = str(dataRecieved.decode(
             'utf-8'))
-         remote_command = remote_string.split()
-         print('comando principal: ', remote_command)
-         if(len(remote_command) > 1):
-            pathWithParam = f'{path}/{remote_command[1]}'
-         command = remote_command[0]
-         print(f'Data recibida de {client_address[0]}:{client_address[1]}')
+         remoteCommand = remoteString.split()
+         print('Command received: ', remoteCommand)
+         if(len(remoteCommand) > 1):
+            pathWithParam = f'{path}/{remoteCommand[1]}'
+         command = remoteCommand[0]
+         print(f'Data recieved from: {clientAddress[0]}:{clientAddress[1]}')
  
          #Manejo de variables con y sin parametro extra
-         if(command == 'ls' and len(remote_command) == 1):
+         if(command == 'ls' and len(remoteCommand) == 1):
             response = '\n'.join(os.listdir(path))
-            client_connection.sendall(response.encode('utf-8'))
+            clientConnection.sendall(response.encode('utf-8'))
          elif(command == 'ls'):
             try:
                response = ''.join(os.listdir(pathWithParam))
@@ -69,49 +70,76 @@ def create_server_socket():
                response = 'The provided bucket does not exist'
             if(response == ''):
                response = 'The selected bucket is empty'
-            client_connection.sendall(response.encode('utf-8'))
+            clientConnection.sendall(response.encode('utf-8'))
          elif(command == 'mkbkt'):
             response = checkPath(pathWithParam)
-            client_connection.sendall(response.encode('utf-8'))
-         elif(command == 'rm' and len(remote_command) == 2):
+            clientConnection.sendall(response.encode('utf-8'))
+         elif(command == 'rm' and len(remoteCommand) == 2):
             try:
                os.rmdir(pathWithParam)
             except OSError:
                response = 'Deletion of the Bucket has failed'
             else:
                response = 'Successfully deleted the bucket'
-            client_connection.sendall(response.encode('utf-8'))
-         elif(command == 'rm' and len(remote_command) == 3):
-            if(not os.path.exists(f'{pathWithParam}/{remote_command[2]}')):
+            clientConnection.sendall(response.encode('utf-8'))
+         elif(command == 'rm' and len(remoteCommand) == 3):
+            if(not os.path.exists(f'{pathWithParam}/{remoteCommand[2]}')):
                response = 'The file does not exist'
             else:
-               os.remove(f'{pathWithParam}/{remote_command[2]}')
+               os.remove(f'{pathWithParam}/{remoteCommand[2]}')
                response = 'File has been deleted successfully'
-            client_connection.sendall(response.encode('utf-8'))
-         elif(command == 'upload'):
-            print(remote_command)
-            remotePath = remote_command[1].split('/')
+            clientConnection.sendall(response.encode('utf-8'))
+         elif(command == 'upload' and len(remoteCommand) == 3):
+            remotePath = remoteCommand[1].split('/')
             fileName = remotePath[len(remotePath) - 1]
-            print(fileName)
-            file = open(f'{path}/{remote_command[2]}/{fileName}', 'wb')
-            stream = client_connection.recv(1024)
+            print('FIle name is: ', fileName)
+            file = open(f'{path}/{remoteCommand[2]}/{fileName}', 'wb')
+            stream = clientConnection.recv(1024)
             while(True):
                file.write(stream)
-               if(file.tell() == int(remote_command[3])):
+               if(file.tell() == int(remoteCommand[3])):
                   break
-               stream = client_connection.recv(1024)
+               stream = clientConnection.recv(1024)
             file.close()
             response = 'File transferred successfully'
-            client_connection.sendall(response.encode('utf-8'))
+            clientConnection.sendall(response.encode('utf-8'))
+         elif(command == 'download' and len(remoteCommand) == 3):               
+            downoladFile = f'{DEFAUlT_BUCKET_PATH}/{remoteCommand[1]}/{remoteCommand[2]}'
+            try:
+               file = open(downoladFile, 'rb')
+            except:
+               response = 'Bucket and file combination does not exist'
+               clientConnection.sendall(response.encode('utf-8'))
+            else:   
+               length = os.path.getsize(downoladFile)
+               print('File Length is: ',length)
+               clientConnection.sendall(bytes(str(length), 'utf-8'))
+               time.sleep(1)
+               stream = file.read(1024)
+               while (stream):
+                  clientConnection.sendall(stream)
+                  stream = file.read(1024)
+               file.close()
+               response = 'File downloaded successfully'
+               clientConnection.sendall(response.encode('utf-8'))
          elif (command == 'quit'):
             response = 'Connection terminated'
-            client_connection.sendall(response.encode('utf-8'))
+            clientConnection.sendall(response.encode('utf-8'))
             break
+         else:
+            response = '''Invalid Command, please insert one of the following: 
+- Create bucket `mkbkt bucketName` 
+- Remove bucket `rm bucketName`
+- List buckets `ls`
+- Listfiles from bucket `ls bucketName`
+- Upload files from client to a server bucket `upload fileName bucketName` or `upload filePath bucketName`
+- Download file from server buckt to client `download bucketName fileName`
+- Remove file from bucket `rm bucketName FileName`'''
+            clientConnection.sendall(response.encode('utf-8'))
  
          
-      print(f'Client {client_address[0]}:{client_address[1]} disconnected')
-      client_connection.close()
+      print(f'Client {clientAddress[0]}:{clientAddress[1]} disconnected')
+      clientConnection.close()
  
 if __name__ == "__main__":
-   # execute only if run as a script
    main()
