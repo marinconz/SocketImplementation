@@ -89,7 +89,7 @@ def createServerSocket():
                os.remove(f'{pathWithParam}/{remoteCommand[2]}')
                response = 'File has been deleted successfully'
             clientConnection.sendall(response.encode('utf-8'))
-         elif(command == 'upload' and len(remoteCommand) == 3):
+         elif(command == 'upload' and len(remoteCommand) == 4):
             remotePath = remoteCommand[1].split('/')
             fileName = remotePath[len(remotePath) - 1]
             print('FIle name is: ', fileName)
