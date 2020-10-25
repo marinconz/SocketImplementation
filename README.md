@@ -19,6 +19,8 @@ Los sockets son un punto final de comunicación bidireccional entre un servidor 
 
 El primer paso para lograr una buena implementación, es conocer la estructura clave de la implementación. Es por esto que se realizó el siguiente diagrama para conocer bien las acciones que se iban a realizar desde el socket y cómo estas interactúan entre el server y el client:
 
+![Arquitectura](https://github.com/marinconz/SocketImplementation/blob/main/Arquitectura%20Sockets.png)
+
 Además de esto, es importante definir el orden de ejecución de los procesos. En este caso, se crea primero una conexión entre el client y el server para poder empezar a enviar y recibir data y luego se chequean los argumentos o el path que el usuario desee para que ahí se ejecute el resto del programa. En caso de que no se ingrese un directorio, o que se ingrese uno incorrecto, se crea uno por defectos. 
 Posteriormente se implementa el multi threading. Esto lo que permite es que el server pueda realizar acciones con varios clientes simultáneamente y que no sea de manera secuencial, es decir, todos los clientes pueden enviar data al mismo tiempo sin esperar a que uno de ellos termine la sesión para poder funcionar.
 
