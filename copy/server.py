@@ -42,7 +42,7 @@ def Main():
    print("Server is running...")
    serverSocket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
    tuppleConnection = ('127.0.0.1', 3000)
-   serverSocket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+   
    serverSocket.bind(tuppleConnection)
    serverSocket.listen(5)
    print('Soket is listening...', serverSocket.getsockname())
@@ -107,7 +107,9 @@ def createServerSocket(clientConnection, clientAddress):
             response = 'File has been deleted successfully'
          clientConnection.sendall(response.encode('utf-8'))
       elif(command == 'upload' and len(remoteCommand) == 4):
+         print(remoteCommand[1])
          remotePath = remoteCommand[1].split('/')
+         print(remotePath)
          fileName = remotePath[len(remotePath) - 1]
          print('FIle name is: ', fileName)
          file = open(f'{path}/{remoteCommand[2]}/{fileName}', 'wb')
