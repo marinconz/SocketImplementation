@@ -54,7 +54,7 @@ def Main():
       clientConnection, clientAddress = serverSocket.accept()
 
       #lock acquired por el cliente
-      print_lock.acquire()
+      print_lock.acquire()#Comando para abrir un hilo
       print(f'New connection detected', clientAddress)
 
       # Empezar un nuevo hilo
@@ -77,9 +77,12 @@ def createServerSocket(clientConnection, clientAddress):
       print(f'Data recieved from: {clientAddress[0]}:{clientAddress[1]}')
 
       #Manejo de variables con y sin parametro extra
+
+      #comando para listar los directorios
       if(command == 'ls' and len(remoteCommand) == 1):
          response = '\n'.join(os.listdir(path))
          clientConnection.sendall(response.encode('utf-8'))
+      #comando para listar los archivos de un directorio en especifico
       elif(command == 'ls'):
          try:
             response = ''.join(os.listdir(pathWithParam))
@@ -88,6 +91,7 @@ def createServerSocket(clientConnection, clientAddress):
          if(response == ''):
             response = 'The selected bucket is empty'
          clientConnection.sendall(response.encode('utf-8'))
+      #comando para crear un nuevo directorio
       elif(command == 'mkbkt'):
          response = checkPath(pathWithParam)
          clientConnection.sendall(response.encode('utf-8'))
@@ -99,6 +103,7 @@ def createServerSocket(clientConnection, clientAddress):
          else:
             response = 'Successfully deleted the bucket'
          clientConnection.sendall(response.encode('utf-8'))
+      #comando para eliminar un directorio  
       elif(command == 'rm' and len(remoteCommand) == 3):
          if(not os.path.exists(f'{pathWithParam}/{remoteCommand[2]}')):
             response = 'The file does not exist'
@@ -106,6 +111,7 @@ def createServerSocket(clientConnection, clientAddress):
             os.remove(f'{pathWithParam}/{remoteCommand[2]}')
             response = 'File has been deleted successfully'
          clientConnection.sendall(response.encode('utf-8'))
+      #comando para subir un archivo al servidor (parte servidor)
       elif(command == 'upload' and len(remoteCommand) == 4):
          print(remoteCommand[1])
          remotePath = remoteCommand[1].split('/')
@@ -122,6 +128,7 @@ def createServerSocket(clientConnection, clientAddress):
          file.close()
          response = 'File transferred successfully'
          clientConnection.sendall(response.encode('utf-8'))
+      #comando para descargar un archivo de un directorio (parte servidor)
       elif(command == 'download' and len(remoteCommand) == 3):               
          downoladFile = f'{DEFAUlT_BUCKET_PATH}/{remoteCommand[1]}/{remoteCommand[2]}'
          try:
@@ -141,6 +148,7 @@ def createServerSocket(clientConnection, clientAddress):
             file.close()
             response = 'File downloaded successfully'
             clientConnection.sendall(response.encode('utf-8'))
+      #comando para finalizar la conexión
       elif (command == 'quit'):
          response = 'Connection terminated'
          clientConnection.sendall(response.encode('utf-8'))
@@ -158,7 +166,7 @@ def createServerSocket(clientConnection, clientAddress):
  
          
    print(f'Client {clientAddress[0]}:{clientAddress[1]} disconnected')
-   clientConnection.close()
+   clientConnection.close()#Comando para cerrar el hilo
  
 if __name__ == "__main__":
    Main()

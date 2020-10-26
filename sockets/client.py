@@ -2,7 +2,7 @@ import socket
 import os
 import time
 
-
+#Ruta para guardar los archivos que se descargan
 DEFAULT_DOWNLOAD_PATH = './Downloads'
 
 clientSocket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -13,7 +13,8 @@ def checkPath(dir):
       return('Creacion exitosa')
    else:
       return('El directorio ya existe')
- 
+
+#Metodo princial del cliente
 def Main():
   print('Client is running')
   clientSocket.connect(('127.0.0.1', 3000))
@@ -22,13 +23,14 @@ def Main():
   print('Enter quit to exit')
   print('Input commands')
   commandToSend = input()
- 
+ #Ciclo para estar revisando los comandos que se manden y revisar que si se escribe el comando "quit" finalice
   while commandToSend != 'quit':
     commands = commandToSend.split()
    
     if(commandToSend == ''):
       print('Please input a valid command')
       commandToSend = input()
+    #Comando para subir archivos al server (parte cliente)
     elif(commands[0] == 'upload'):
       print(commands)
       if(not os.path.exists(commands[1])):
@@ -46,6 +48,7 @@ def Main():
         dataReceived = clientSocket.recv(1024)
         print(dataReceived.decode('utf-8'))
         commandToSend = input()
+    #Comando para descargar archivos del server (parte cliente)
     elif(commands[0] == 'download'):
       print(commands)
       checkPath(DEFAULT_DOWNLOAD_PATH)
